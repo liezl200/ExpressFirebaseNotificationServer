@@ -13,18 +13,17 @@
         <script>
         var REGEX_EMAIL = '([a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*@' +
                   '(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)';
-
+        var users = [];
+        <% emails.forEach(function(emailData) { %>
+            users.push({'email' : "<%= emailData.email %>", 'name': "<%= emailData.name %>"});
+        <% }); %>
         $('#select-to').selectize({
             persist: false,
             maxItems: null,
             valueField: 'email',
             labelField: 'name',
             searchField: ['name', 'email'],
-            options: [
-                {email: 'brian@thirdroute.com', name: 'Brian Reavis'},
-                {email: 'nikola@tesla.com', name: 'Nikola Tesla'},
-                {email: 'someone@gmail.com'}
-            ],
+            options:  users,
             render: {
                 item: function(item, escape) {
                     return '<div>' +
