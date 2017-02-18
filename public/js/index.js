@@ -32,9 +32,10 @@ $(function() {
 	});
 
 	// show current input values
+	// TODO: only add class 'selected-email' to the users selection and add class 'selected-topic' to the input tags
 	$('select.selectized,input.selectized', $wrapper).each(function() {
 		var $container = $('<div>').addClass('value')
-		var $value = $('<input>').addClass('selected-stock').attr('type','hidden').appendTo($container);
+		var $value = $('<input>').addClass('selected-email').attr('type','hidden').appendTo($container);
 		var $input = $(this);
 		console.log($input);
 		var update = function(e) { $value.text($input.val()); }

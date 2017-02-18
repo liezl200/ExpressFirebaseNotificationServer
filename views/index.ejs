@@ -37,8 +37,10 @@
 
             <script>
                 function onSubmit() {
-                    window.location.href = "/info/" + $(".selected-emails").text();
+                    console.log($(".selected-email").text());
+                    window.location.href = "/info/" + $(".selected-email").text();
                 }
+
             </script>
         </div>
     </body>

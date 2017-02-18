@@ -13,10 +13,11 @@
         <script>
         var REGEX_EMAIL = '([a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*@' +
                   '(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)';
-        var users = [];
-        <% emails.forEach(function(emailData) { %>
+        var users = []; // [{email: '', name: ''}, ...]
+        <% users.forEach(function(emailData) { %>
             users.push({'email' : "<%= emailData.email %>", 'name': "<%= emailData.name %>"});
         <% }); %>
+        console.log(users);
         $('#select-to').selectize({
             persist: false,
             maxItems: null,
@@ -83,15 +84,6 @@
             }
         });
         </script>
-
-        <script>
-            /* $('body').keypress(function(e) {
-                if (e.keyCode == '13') {
-                    window.location.href = "/info/" + $(".selected-emails").text();
-                }
-            }); */
-        </script>
-
 
 
     </div>
