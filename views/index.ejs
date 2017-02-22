@@ -38,7 +38,19 @@
             <script>
                 function onSubmit() {
                     console.log($(".selected-email").text());
-                    window.location.href = "/info?emails=" + $(".selected-email").text() + "&tags=" + $(".selected-tag").text();
+                    console.log($(".selected-tag").text());
+                    $.ajax({
+                        type: 'POST',
+                        url: '/send',
+                        data: {
+                            emails: $(".selected-email").text(),
+                            tags: $(".selected-tag").text(),
+                        },
+                        success: function(resultData) {
+                            alert(resultData);
+                        }
+                    });
+                    // window.location.href = "/sendNotification?emails=" + $(".selected-email").text() + "&tags=" + $(".selected-tag").text(); // don't use a GET request like this
                 }
 
             </script>
