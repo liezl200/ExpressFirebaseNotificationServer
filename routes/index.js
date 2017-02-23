@@ -31,14 +31,8 @@ router.post('/send', function(req, res, next) {
     var notificationTitle = 'test1';//req.body.title;
     var notificationBody = 'test body';//req.body.body;
 
-    console.log('send');
-    console.log(targetEmailsStr);
-    // console.log(targetEmails);
-    // console.log(topics);
     if ('null' !== targetEmailsStr) {
-        console.log('hi')
         var targetEmails = targetEmailsStr.split(',');
-        // console.log(JSON.stringify(targetEmails));
         // get FCM tokens from Firebase server -- only if emails are specified
         var usersRef = firebase.database().ref().child('users');
         usersRef.orderByChild('email') // try to look up this user in our firebase db users table
@@ -56,7 +50,6 @@ router.post('/send', function(req, res, next) {
                         // targetDevices.concat(Array.from(userData.val().fcmTokens));
                     }
                 });
-                // targetDevices.forEach(function(targetDevice) { console.log(targetDevice); });
                 // send notification to the listed recipients based on the retrieved
                 console.log(JSON.stringify(targetDevices))
                 sendNotification(targetDevices, notificationTitle, notificationBody, () => {
