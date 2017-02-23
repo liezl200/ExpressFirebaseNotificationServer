@@ -4,7 +4,7 @@ var router = express.Router();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-	// TODO: get topics from Firebase server
+	// TODO: get tags from Firebase server
 	var usersRef = firebase.database().ref().child('users');
 	var users = [];
 	usersRef.orderByChild('email') // try to look up this user in our firebase db users table
@@ -14,7 +14,7 @@ router.get('/', function(req, res, next) {
     		var email = userData.val().email;
     		users.push({'email': email, 'name': email.substring(0, email.indexOf('@')), 'fcmTokens': userData.val().fcmTokens});
     	});
-    	// console.log(users);
+    	console.log(users);
     	// console.log(snapshot.val());
         res.render('index', { title: 'Search', sendResults: null, users: users});
     });
@@ -24,13 +24,11 @@ router.get('/', function(req, res, next) {
 router.post('/send', function(req, res, next) {
     var targetEmails = req.body.emails;
     var topics = req.body.tags;
-
-    // console.log('send');
-    // console.log(targetEmails);
-    // console.log(topics);
-
-    if (emails) {
-        // get FCM tokens from Firebase server -- only if emails are specified
+    console.log('send');
+    console.log(targetEmails);
+    console.log(topics);
+    if (targetEmails) {
+        // get FCM tokens from Firebase server -- TODO: only if emails are specified
         var usersRef = firebase.database().ref().child('users');
         var users = [];
         usersRef.orderByChild('email') // try to look up this user in our firebase db users table
@@ -43,9 +41,9 @@ router.post('/send', function(req, res, next) {
             // console.log(users);
             // console.log(snapshot.val());
 
-            // TODO: send notification to the listed recipients based on the retrieved FCM tokens
+            // TODO: send notification to the listed recipients based on the retrieved
         });
-    } else { // send to all users
+    } else {
 
     }
 
