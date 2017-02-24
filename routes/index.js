@@ -28,8 +28,8 @@ router.get('/', function(req, res, next) {
 router.post('/send', function(req, res, next) {
     var targetEmailsStr = req.body.emails;
     var topicsStr = req.body.tags; // TODO pass this into the sendNotification function
-    var notificationTitle = 'test1';//req.body.title;
-    var notificationBody = 'test body';//req.body.body;
+    var notificationTitle = req.body.title;
+    var notificationBody = req.body.body;
 
     if ('null' !== targetEmailsStr) {
         var targetEmails = targetEmailsStr.split(',');
@@ -75,11 +75,19 @@ function sendNotification(devices, title, body, onSuccess){
         },
     }
     var requestBodyObj = {
-        "notification": {
-            "title": title,
-            "body": body
-        },
-        //"to": devices
+        // "notification": {
+        //      "title": title,
+        //      "body": body
+        // },
+        "data": {
+            "custom_notification": {
+                "body": body,
+                "title": title,
+                "color":"#00ACD4",
+                "priority":"high",
+                "show_in_foreground": false
+            }
+        }
     }
     console.log(devices);
     if (devices) {
