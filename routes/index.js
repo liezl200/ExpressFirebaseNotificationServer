@@ -31,6 +31,8 @@ router.post('/send', function(req, res, next) {
     var notificationTitle = req.body.title;
     var notificationBody = req.body.body;
 
+    // TODO (liezl): add this notification to notifications database -- make sure to have a timestamp field
+    var storedNotifKey = addNotificationToList(notificationTitle, notificationBody, topicsStr);
     if ('null' !== targetEmailsStr) {
         var targetEmails = targetEmailsStr.split(',');
         // get FCM tokens from Firebase server -- only if emails are specified
@@ -47,8 +49,19 @@ router.post('/send', function(req, res, next) {
                         userData.val().fcmTokens.forEach(function(fcmToken) {
                             targetDevices.push(fcmToken);
                         });
-                        // targetDevices.concat(Array.from(userData.val().fcmTokens));
                     }
+
+                    // add this notification key to each user that it was addressed to
+                    // TODO: encapsulate the following into a function addNotificationKeyToList
+                    var ungroupedNotifs = userData.child("ungroupedNotifs").val();
+                    if (ungroupedNotifs && !ungroupedNotifs.includes(storedNotifKey)) {
+                      // associate this new notification with this user
+                      ungroupedNotifs.push(storedNotifKey);
+                      var updates = {}
+                      updates['/users/' + userData.key + '/ungroupedNotifs'] = ungroupedNotifs;
+                      firebase.database().ref().update(updates);
+                    }
+
                 });
                 // send notification to the listed recipients based on the retrieved
                 console.log(JSON.stringify(targetDevices))
@@ -57,12 +70,36 @@ router.post('/send', function(req, res, next) {
                 })
             });
     } else { // send to all users
+        // add this notification key to the "all_notifications" table
+        var allNotifsRef = firebase.database().ref().child('all-notifs');
+        allNotifsRef.push().set({
+            notifKey: storedNotifKey
+        });
+        // TODO: debug sending notifications to all users
         sendNotification(null, notificationTitle, notificationBody, () => {
             console.log('notification sent to all users!');
         })
     }
 
 });
+
+function addNotificationToList(title, body, topicsStr) {
+    var topics = [];
+    if (topicsStr !== "null") {
+        topics = topicsStr.split(',');
+    }
+
+    var notifsRef = firebase.database().ref().child('notifs');
+    var updates = {}
+    var newNotif = notifsRef.push();
+    var newNotifKey = newNotif.key;
+    newNotif.set({
+        title: title,
+        text: body,
+        topcs: topics
+    });
+    return newNotifKey; // console.log(newNotifKey);
+}
 
 // NOTE: we can never have a topic called "null"
 function sendNotification(devices, title, body, onSuccess){
@@ -92,6 +129,8 @@ function sendNotification(devices, title, body, onSuccess){
     console.log(devices);
     if (devices) {
         requestBodyObj["registration_ids"] = devices;
+    } else {
+        requestBodyObj["to"] = "topics/all"; // send to all users (because RN app auto-subscribes users to "all" topic)
     }
 
     var body = JSON.stringify(requestBodyObj);
