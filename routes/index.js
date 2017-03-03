@@ -38,7 +38,7 @@ router.post('/send', function(req, res, next) {
         // get FCM tokens from Firebase server -- only if emails are specified
         var usersRef = firebase.database().ref().child('users');
         usersRef.orderByChild('email') // try to look up this user in our firebase db users table
-            .on('value', function(snapshot) {
+            .once('value', function(snapshot) {
                 var targetDevices = [];
                 snapshot.forEach(function(userData) {
                     console.log(userData.val());
@@ -53,14 +53,19 @@ router.post('/send', function(req, res, next) {
 
                     // add this notification key to each user that it was addressed to
                     // TODO: encapsulate the following into a function addNotificationKeyToList
-                    var ungroupedNotifs = userData.child("ungroupedNotifs").val();
-                    if (ungroupedNotifs && !ungroupedNotifs.includes(storedNotifKey)) {
-                      // associate this new notification with this user
-                      ungroupedNotifs.push(storedNotifKey);
-                      var updates = {}
-                      updates['/users/' + userData.key + '/ungroupedNotifs'] = ungroupedNotifs;
-                      firebase.database().ref().update(updates);
+                    // get the user reference that matches this user
+                    var userKey = userData.key;
+                    var notifsInfoList = usersRef.child(userKey).child('notifsInfo');
+
+                    // associate this new notification with this user, set interactions ('read' 'archived' 'starred') to default values
+                    var notifInfo = {
+                        notifKey: storedNotifKey,
+                        read: false,
+                        archived: false,
+                        starred: false
                     }
+                    notifsInfoList.push(notifInfo);
+
 
                 });
                 // send notification to the listed recipients based on the retrieved
@@ -70,7 +75,7 @@ router.post('/send', function(req, res, next) {
                 })
             });
     } else { // send to all users
-        // add this notification key to the "all_notifications" table
+        // add this notification key to the "all-notifs" table
         var allNotifsRef = firebase.database().ref().child('all-notifs');
         allNotifsRef.push().set({
             notifKey: storedNotifKey
