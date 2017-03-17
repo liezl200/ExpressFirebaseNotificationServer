@@ -8,26 +8,38 @@ const serviceAccount = require('../serviceAccountKey.json')
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-	// TODO: get tags from Firebase server
-	var usersRef = firebase.database().ref().child('users');
-	var users = [];
-	usersRef.orderByChild('email') // try to look up this user in our firebase db users table
-    .on('value', function(snapshot) {
-    	snapshot.forEach(function(userData) {
-    		console.log(userData.val());
-    		var email = userData.val().email;
-    		users.push({'email': email, 'name': email.substring(0, email.indexOf('@')), 'fcmTokens': userData.val().fcmTokens});
-    	});
-    	console.log(users);
-    	// console.log(snapshot.val());
-        res.render('index', { title: 'Search', sendResults: null, users: users});
-    });
+    // get users
+    var usersRef = firebase.database().ref().child('users');
+    var users = [];
+    usersRef.orderByChild('email') // try to look up this user in our firebase db users table
+        .once('value', function(snapshot) {
+            snapshot.forEach(function(userData) {
+                // console.log(userData.val());
+                var email = userData.val().email;
+                users.push({'email': email, 'name': email.substring(0, email.indexOf('@')), 'fcmTokens': userData.val().fcmTokens});
+            });
+            // console.log(users);
+            // console.log(snapshot.val());
+            //res.render('index', { title: 'Search', sendResults: null, users: users});
+
+            // get tags from Firebase server
+            var groupsRef = firebase.database().ref().child('groups');
+            var groups = [];
+            groupsRef.orderByChild('email') // try to look up this group in our firebase db groups table
+                .once('value', function(snapshot) {
+                    snapshot.forEach(function(groupData) {
+                        groups.push(groupData.val());
+                    });
+                    // console.log(groups);
+                    res.render('index', { title: 'Search', sendResults: null, users: users, groups: groups});
+                });
+        });
 });
 
 /* POST to send notification */
 router.post('/send', function(req, res, next) {
     var targetEmailsStr = req.body.emails;
-    var topicsStr = req.body.tags; // TODO pass this into the sendNotification function
+    var topicsStr = req.body.tags; // pass this into the sendNotification function
     var notificationTitle = req.body.title;
     var notificationBody = req.body.body;
 
@@ -45,7 +57,6 @@ router.post('/send', function(req, res, next) {
                     var email = userData.val().email;
                     if (userData.val().fcmTokens && targetEmails.indexOf(email) > -1) { // if the current user has a registered FCM token
                         console.log('match ' + userData.val().fcmTokens);
-                        console.log(typeof userData.val().fcmTokens);
                         userData.val().fcmTokens.forEach(function(fcmToken) {
                             targetDevices.push(fcmToken);
                         });
@@ -65,11 +76,9 @@ router.post('/send', function(req, res, next) {
                         starred: false
                     }
                     notifsInfoList.push(notifInfo);
-
-
                 });
                 // send notification to the listed recipients based on the retrieved
-                console.log(JSON.stringify(targetDevices))
+                console.log('target devices: ' + JSON.stringify(targetDevices))
                 sendNotification(targetDevices, notificationTitle, notificationBody, () => {
                     console.log('notification sent to ' + targetEmails.length + ' users (' + targetDevices.length + ' devices)');
                 })
@@ -93,7 +102,7 @@ function addNotificationToList(title, body, topicsStr) {
     if (topicsStr !== "null") {
         topics = topicsStr.split(',');
     }
-
+    console.log(topics);
     var notifsRef = firebase.database().ref().child('notifs');
     var updates = {}
     var newNotif = notifsRef.push();

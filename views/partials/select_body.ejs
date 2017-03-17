@@ -13,11 +13,21 @@
         <script>
         var REGEX_EMAIL = '([a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*@' +
                   '(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)';
+
+        // load users from response
         var users = []; // [{email: '', name: ''}, ...]
         <% users.forEach(function(emailData) { %>
             users.push({'email' : "<%= emailData.email %>", 'name': "<%= emailData.name %>"});
         <% }); %>
         console.log(users);
+
+        // load groups from response
+        var groups = [];
+        <% groups.forEach(function(group) { %>
+            groups.push({'value' : "<%= group %>", 'text' : "<%= group %>"});
+        <% }); %>
+        console.log(groups);
+
         $('#select-to').selectize({
             persist: false,
             maxItems: null,
@@ -76,6 +86,7 @@
             delimiter: ',',
             maxItems: null,
             persist: false,
+            options: groups,
             create: function(input) {
                 return {
                     value: input,
