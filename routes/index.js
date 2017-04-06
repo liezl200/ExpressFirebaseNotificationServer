@@ -87,8 +87,6 @@ router.post('/send', function(req, res, next) {
           var notifInfo = {
             notifKey: storedNotifKey,
             read: false,
-            archived: false,
-            starred: false
           }
           notifsInfoList.push(notifInfo);
         });
@@ -127,8 +125,6 @@ router.post('/clearUsers', function(req, res, next) {
               usersRef.child(userData.key).child('notifsInfo').set({
                 welcome: {
                   notifKey: 'welcome',
-                  starred: false,
-                  archived: false,
                   read: false,
                 },
               });
