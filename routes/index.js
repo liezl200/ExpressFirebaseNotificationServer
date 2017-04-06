@@ -112,6 +112,50 @@ router.post('/send', function(req, res, next) {
 
 });
 
+router.post('/clearUsers', function(req, res, next) {
+  var targetEmailsStr = req.body.emails;
+  if ('null' !== targetEmailsStr) {
+    var targetEmails = [];
+    targetEmails = targetEmailsStr.split(',');
+    var usersRef = firebase.database().ref().child('users');
+    usersRef.orderByChild('email').once('value', function(snapshot) {
+      snapshot.forEach(function(userData) {
+        var email = userData.val().email;
+        if (targetEmails.indexOf(email) > -1 ) { // if the current user is in the list of selected users
+          usersRef.child(userData.key).child('notifsInfo').remove(function(error) {
+            if(!error) {
+              usersRef.child(userData.key).child('notifsInfo').set({
+                welcome: {
+                  notifKey: 'welcome',
+                  starred: false,
+                  archived: false,
+                  read: false,
+                },
+              });
+            }
+          });
+        }
+      });
+    });
+  }
+});
+
+router.post('/clearNotifications', function(req, res, next) {
+  var notifsRef = firebase.database().ref().child('notifs');
+  notifsRef.remove(function(error) {
+    if(!error) {
+      notifsRef.set({
+        welcome: {
+          html: 'welcome',
+          text: 'welcome',
+          timeSent: 0,
+          title: 'Welcome to Kiron!',
+        },
+      });
+    }
+  });
+});
+
 function groupUnionExists(userGroups, groupsStr) {
   var groups = [];
   if (groupsStr !== "null") {
