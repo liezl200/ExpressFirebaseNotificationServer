@@ -33,10 +33,30 @@
 
                 <!-- SUBMIT -->
                 <button type="button" onClick="onSubmit()" class="btn btn-primary">Push it!</button>
+                <button type="button" onClick="onGenerate()" class="btn btn-secondary">Generate Test Example</button>
             </div>
 
             <script>
                 function onSubmit() {
+                    console.log($(".selected-email").text());
+                    console.log($(".selected-tag").text());
+                    $.ajax({
+                        type: 'POST',
+                        url: '/send',
+                        data: {
+                            emails: $(".selected-email").text(),
+                            tags: $(".selected-tag").text(),
+                            title: $("#notificationTitle").val(),
+                            body: $("#notificationBody").val(),
+                        },
+                        success: function(resultData) {
+                            alert(resultData);
+                        }
+                    });
+                    // window.location.href = "/sendNotification?emails=" + $(".selected-email").text() + "&tags=" + $(".selected-tag").text(); // don't use a GET request like this
+                }
+
+                function onGenerate() {
                     console.log($(".selected-email").text());
                     console.log($(".selected-tag").text());
                     $.ajax({

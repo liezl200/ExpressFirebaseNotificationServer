@@ -6,6 +6,17 @@ var API_KEY = "AAAA4aMrHeI:APA91bFoDhKYhDaTJfUo-dVd1UY9oVOWZ-dhQSWGJcq6V11-0Ud59
 
 const serviceAccount = require('../serviceAccountKey.json')
 
+
+/* GET notification history. */
+router.get('/history', function(req, res, next) {
+
+});
+
+/* GET group definitions. */
+router.get('/group', function(req, res, next) {
+
+});
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
     // get users
@@ -25,7 +36,7 @@ router.get('/', function(req, res, next) {
             // get tags from Firebase server
             var groupsRef = firebase.database().ref().child('groups');
             var groups = [];
-            groupsRef.orderByChild('email') // try to look up this group in our firebase db groups table
+            groupsRef // try to look up this group in our firebase db groups table
                 .once('value', function(snapshot) {
                     snapshot.forEach(function(groupData) {
                         groups.push(groupData.val());
@@ -39,23 +50,27 @@ router.get('/', function(req, res, next) {
 /* POST to send notification */
 router.post('/send', function(req, res, next) {
     var targetEmailsStr = req.body.emails;
-    var topicsStr = req.body.tags; // pass this into the sendNotification function
+    var groupsStr = req.body.tags; // pass this into the sendNotification function
     var notificationTitle = req.body.title;
     var notificationBody = req.body.body;
-
+    console.log('sending')
     // TODO (liezl): add this notification to notifications database -- make sure to have a timestamp field
-    var storedNotifKey = addNotificationToList(notificationTitle, notificationBody, topicsStr);
-    if ('null' !== targetEmailsStr) {
-        var targetEmails = targetEmailsStr.split(',');
+    var storedNotifKey = addNotificationToList(notificationTitle, notificationBody, groupsStr);
+    if ('null' !== targetEmailsStr || groupsStr.length > 0) {
+        var targetEmails = [];
+        console.log(targetEmailsStr);
+        if ('null' !== targetEmailsStr) {
+            targetEmails = targetEmailsStr.split(',');
+        }
         // get FCM tokens from Firebase server -- only if emails are specified
         var usersRef = firebase.database().ref().child('users');
         usersRef.orderByChild('email') // try to look up this user in our firebase db users table
             .once('value', function(snapshot) {
                 var targetDevices = [];
                 snapshot.forEach(function(userData) {
-                    console.log(userData.val());
+                    //console.log(userData.val());
                     var email = userData.val().email;
-                    if (userData.val().fcmTokens && targetEmails.indexOf(email) > -1) { // if the current user has a registered FCM token
+                    if (userData.val().fcmTokens && (targetEmails.indexOf(email) > -1 || groupUnionExists(userData.val().groups, groupsStr))) { // if the current user has a registered FCM token
                         console.log('match ' + userData.val().fcmTokens);
                         userData.val().fcmTokens.forEach(function(fcmToken) {
                             targetDevices.push(fcmToken);
@@ -97,12 +112,25 @@ router.post('/send', function(req, res, next) {
 
 });
 
-function addNotificationToList(title, body, topicsStr) {
-    var topics = [];
-    if (topicsStr !== "null") {
-        topics = topicsStr.split(',');
+function groupUnionExists(userGroups, groupsStr) {
+    var groups = [];
+    if (groupsStr !== "null") {
+        groups = groupsStr.split(',');
     }
-    console.log(topics);
+    userGroups.forEach(function(ug) {
+        if (groups.indexOf(ug) !== -1) {
+            return true;
+        }
+    });
+    return false;
+}
+
+function addNotificationToList(title, body, groupsStr) {
+    var groups = [];
+    if (groupsStr !== "null") {
+        groups = groupsStr.split(',');
+    }
+    console.log(groups);
     var notifsRef = firebase.database().ref().child('notifs');
     var updates = {}
     var newNotif = notifsRef.push();
@@ -110,12 +138,30 @@ function addNotificationToList(title, body, topicsStr) {
     newNotif.set({
         title: title,
         text: body,
-        topcs: topics
+        groups: groups,
+        timeSent: Date.now(),
     });
+    // get tags from Firebase server
+    var groupsRef = firebase.database().ref().child('groups');
+    var oldGroups = [];
+    groupsRef // try to look up this group in our firebase db groups table
+        .once('value', function(snapshot) {
+            snapshot.forEach(function(groupData) {
+                oldGroups.push(groupData.val());
+            });
+            groups.forEach(function(gr){
+                if (oldGroups.indexOf(gr) === -1) {
+                    oldGroups.push(gr);
+                }
+            });
+            groupsRef.set(oldGroups); // oldGroups has now been updated with all the additional created groups
+        });
+
+
     return newNotifKey; // console.log(newNotifKey);
 }
 
-// NOTE: we can never have a topic called "null"
+// NOTE: we can never have a group called "null"
 function sendNotification(devices, title, body, onSuccess){
     var requestObj = {
         url: 'https://fcm.googleapis.com/fcm/send',
@@ -144,7 +190,7 @@ function sendNotification(devices, title, body, onSuccess){
     if (devices) {
         requestBodyObj["registration_ids"] = devices;
     } else {
-        requestBodyObj["to"] = "topics/all"; // send to all users (because RN app auto-subscribes users to "all" topic)
+        requestBodyObj["to"] = "topics/all"; // send to all users (the companion RN app auto-subscribes users to "all" group)
     }
 
     var body = JSON.stringify(requestBodyObj);
