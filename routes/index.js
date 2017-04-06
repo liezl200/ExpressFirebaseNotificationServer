@@ -165,6 +165,10 @@ function groupUnionExists(userGroups, groupsStr) {
   return false;
 }
 
+function htmlToPlainText(html) {
+  return html.replace(/<(?:.|\n)*?>/gm, '');
+}
+
 function addNotificationToList(title, body, groupsStr) {
   var groups = [];
   if (groupsStr !== "null") {
@@ -177,7 +181,8 @@ function addNotificationToList(title, body, groupsStr) {
   var newNotifKey = newNotif.key;
   newNotif.set({
     title: title,
-    text: body,
+    text: htmlToPlainText(body),
+    html: body,
     groups: groups,
     timeSent: Date.now(),
   });
