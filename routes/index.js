@@ -24,7 +24,6 @@ function addNotificationToList(title, body) {
   return newNotifKey; // console.log(newNotifKey);
 }
 
-// NOTE: we can never have a group called "null"
 function sendNotification(devices, title, body) {
   const requestObj = {
     url: 'https://fcm.googleapis.com/fcm/send',
@@ -48,7 +47,7 @@ function sendNotification(devices, title, body) {
   if (devices) {
     requestBodyObj.registration_ids = devices;
   } else {
-    requestBodyObj.to = 'topics/all'; // send to all users (the companion RN app auto-subscribes users to "all" group)
+    requestBodyObj.to = 'topics/all'; // send to all users (the companion RN app auto-subscribes users to "all" topic)
   }
 
   const requestBody = JSON.stringify(requestBodyObj);
@@ -74,10 +73,9 @@ router.get('/', (req, res) => {
 /* POST to send notification */
 router.post('/send', (req) => {
   const targetEmailsStr = req.body.emails;
-  const groupsStr = req.body.tags; // pass this into the sendNotification function
   const notificationTitle = req.body.title;
   const notificationBody = req.body.body;
-  const storedNotifKey = addNotificationToList(notificationTitle, notificationBody, groupsStr);
+  const storedNotifKey = addNotificationToList(notificationTitle, notificationBody);
   if (targetEmailsStr !== 'null') {
     const targetEmails = targetEmailsStr.split(',');
     // get FCM tokens from Firebase server -- only if emails are specified
