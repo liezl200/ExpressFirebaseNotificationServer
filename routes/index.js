@@ -57,16 +57,29 @@ function sendNotification(devices, title, body) {
 
 /* GET home page. */
 router.get('/', (req, res) => {
+  // get users
   // eslint-disable-next-line no-undef
   const usersRef = firebase.database().ref().child('users');
   const users = [];
   usersRef.orderByChild('email') // try to look up this user in our firebase db users table
     .once('value', (snapshot) => {
       snapshot.forEach((userData) => {
+        // console.log(userData.val());
         const email = userData.val().email;
         users.push({ email, name: email.substring(0, email.indexOf('@')), fcmTokens: userData.val().fcmTokens });
       });
-      res.render('index', { title: 'Search', sendResults: null, users });
+      // get tags from Firebase server
+      // eslint-disable-next-line no-undef
+      const groupsRef = firebase.database().ref().child('groups');
+      const groups = [];
+      if (groupsRef) {
+        groupsRef.once('value', (snap) => {
+          snap.forEach((groupData) => {
+            groups.push(groupData.val());
+          });
+          res.render('index', { title: 'Search', sendResults: null, users, groups });
+        });
+      }
     });
 });
 
