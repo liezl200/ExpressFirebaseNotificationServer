@@ -36,14 +36,15 @@ router.get('/', function(req, res, next) {
       // get tags from Firebase server
       var groupsRef = firebase.database().ref().child('groups');
       var groups = [];
-      groupsRef // try to look up this group in our firebase db groups table
-        .once('value', function(snapshot) {
-          snapshot.forEach(function(groupData) {
-            groups.push(groupData.val());
+      if (groupsRef) {
+        groupsRef.once('value', function(snapshot) {
+            snapshot.forEach(function(groupData) {
+              groups.push(groupData.val());
+            });
+            // console.log(groups);
+            res.render('index', { title: 'Search', sendResults: null, users: users, groups: groups});
           });
-          // console.log(groups);
-          res.render('index', { title: 'Search', sendResults: null, users: users, groups: groups});
-        });
+      }
     });
 });
 
@@ -153,6 +154,9 @@ router.post('/clearNotifications', function(req, res, next) {
 });
 
 function groupUnionExists(userGroups, groupsStr) {
+  if (!userGroups) {
+    return false;
+  }
   var groups = [];
   if (groupsStr !== "null") {
     groups = groupsStr.split(',');
@@ -223,7 +227,7 @@ function sendNotification(devices, title, body, onSuccess){
     // },
     "data": {
       "custom_notification": {
-        "body": body,
+        "body": htmlToPlainText(body),
         "title": title,
         "color":"#00ACD4",
         "priority":"high",
